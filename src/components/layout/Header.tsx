@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '../../config/app.config';
 import { useAuth } from '../../context/AuthContext';
-import { Plus, LogOut, Flame, Sparkles, Settings } from 'lucide-react';
+import { Plus, LogOut, Sparkles, Settings, ShieldCheck } from 'lucide-react';
 import ktLogo from '../../assets/kt-logo.jpeg';
 
 interface HeaderProps {
@@ -10,7 +10,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onOpenAddLead }) => {
-  const { user, logout, isDemoMode } = useAuth();
+  const { user, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-30 glass-panel border-b border-indigo-500/15 px-4 sm:px-6 py-3 flex items-center justify-between gap-4 shadow-xl shadow-indigo-950/20">
@@ -30,17 +30,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddLead }) => {
             <h1 className="font-extrabold text-base sm:text-lg tracking-tight leading-none gradient-text">
               {APP_CONFIG.name}
             </h1>
-            {isDemoMode ? (
-              <span className="text-[10px] uppercase font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
-                <Flame className="w-3 h-3 text-amber-400" />
-                Demo Mode
-              </span>
-            ) : (
-              <span className="text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                Live Cloud
-              </span>
-            )}
+            <span className="text-[10px] font-extrabold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              Live CRM
+            </span>
           </div>
           <p className="text-[11px] text-slate-400 hidden sm:block mt-0.5 font-medium">
             {APP_CONFIG.tagline}
@@ -74,7 +67,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddLead }) => {
           <div className="hidden md:flex items-center gap-3 pl-3 border-l border-slate-800">
             <div className="text-right text-xs">
               <p className="text-slate-200 font-semibold">{user.email}</p>
-              <p className="text-[10px] text-brand-400 font-medium">Staff Account</p>
+              <p className="text-[10px] text-brand-400 font-medium flex items-center gap-1 justify-end">
+                <ShieldCheck className="w-3 h-3" /> Staff Account
+              </p>
             </div>
             <button
               onClick={logout}

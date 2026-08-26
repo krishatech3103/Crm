@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { APP_CONFIG } from '../config/app.config';
-import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
 import ktLogo from '../assets/kt-logo.jpeg';
 
 export const LoginPage: React.FC = () => {
-  const { user, login, isDemoMode } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState(isDemoMode ? 'agent@krishatech.com' : '');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -34,15 +34,6 @@ export const LoginPage: React.FC = () => {
     if (error) {
       setErrorMessage(error.message || 'Login failed. Please check credentials.');
     } else {
-      navigate('/', { replace: true });
-    }
-  };
-
-  const handleDemoQuickLogin = async () => {
-    setIsSubmitting(true);
-    const { error } = await login('agent@krishatech.com');
-    setIsSubmitting(false);
-    if (!error) {
       navigate('/', { replace: true });
     }
   };
@@ -81,13 +72,11 @@ export const LoginPage: React.FC = () => {
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-brand-400" />
-              <h2 className="text-sm font-semibold text-white">Staff Login Portal</h2>
+              <h2 className="text-sm font-semibold text-white">Staff Authentication Portal</h2>
             </div>
-            {isDemoMode && (
-              <span className="text-[10px] uppercase font-extrabold bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full">
-                Demo Mode
-              </span>
-            )}
+            <span className="text-[10px] uppercase font-extrabold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+              Secure
+            </span>
           </div>
 
           {errorMessage && (
@@ -122,8 +111,8 @@ export const LoginPage: React.FC = () => {
                 <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
                 <input
                   type="password"
-                  required={!isDemoMode}
-                  placeholder={isDemoMode ? 'Optional in demo mode' : '••••••••'}
+                  required
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-3 text-sm text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-slate-600"
@@ -140,20 +129,6 @@ export const LoginPage: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
-
-          {/* Quick Demo Mode Button */}
-          {isDemoMode && (
-            <div className="pt-2 border-t border-slate-800">
-              <button
-                type="button"
-                onClick={handleDemoQuickLogin}
-                className="w-full py-2.5 px-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
-              >
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>One-Click Sales Agent Access (Demo)</span>
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Footer */}

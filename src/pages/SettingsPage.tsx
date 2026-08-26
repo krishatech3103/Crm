@@ -18,7 +18,7 @@ const INITIAL_TEAM: TeamMember[] = [
   },
   {
     id: 'usr_002',
-    name: 'Sales Agent (Demo)',
+    name: 'Internal Sales Agent',
     email: 'agent@krishatech.com',
     role: 'Sales Agent',
     phone: '+91 98220 12345',
@@ -109,12 +109,13 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleResetDemoData = () => {
-    if (confirm('Reset all demo CRM data back to defaults? (Leads & call history will reload from mock set)')) {
-      localStorage.removeItem('leadflow_leads_v1');
+  const handleResetData = () => {
+    if (confirm('Clear local cache & reset lead database state?')) {
+      localStorage.removeItem('leadflow_leads_data');
       localStorage.removeItem('krisha_crm_team');
       setTeamMembers(INITIAL_TEAM);
-      showToast('Demo data reset to initial state. Please refresh page.', 'info');
+      showToast('Cache cleared. Page will refresh.', 'info');
+      setTimeout(() => window.location.reload(), 1000);
     }
   };
 
@@ -345,8 +346,8 @@ export const SettingsPage: React.FC = () => {
                 <p className="text-white font-extrabold text-sm flex items-center gap-2">
                   {isDemoMode ? (
                     <>
-                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                      <span>Demo Mode (LocalStorage)</span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      <span>Active Local Database</span>
                     </>
                   ) : (
                     <>
@@ -366,19 +367,19 @@ export const SettingsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Reset Demo Data Action */}
+            {/* Reset Local Cache Action */}
             <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold text-white">Reset Demo Storage Cache</p>
-                <p className="text-[11px] text-slate-400">Restore standard mock leads and initial staff credentials</p>
+                <p className="text-xs font-bold text-white">Reset Local Database Cache</p>
+                <p className="text-[11px] text-slate-400">Clear stored records and restore initial state</p>
               </div>
 
               <button
-                onClick={handleResetDemoData}
+                onClick={handleResetData}
                 className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-amber-300 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 rounded-xl transition-all"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                <span>Reset Demo Data</span>
+                <span>Reset Database</span>
               </button>
             </div>
           </div>
