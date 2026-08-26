@@ -51,6 +51,7 @@ export const ForcePasswordChangeModal: React.FC = () => {
       subtitle="Required before you continue using the CRM."
       maxWidth="sm"
       showCloseButton={false}
+      mobilePosition="center"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="rounded-2xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs leading-5 text-amber-100">

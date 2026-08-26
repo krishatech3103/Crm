@@ -2,14 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '../../config/app.config';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, Plus, Settings, ShieldCheck, Sparkles } from 'lucide-react';
+import { LogOut, ShieldCheck } from 'lucide-react';
 import ktLogo from '../../assets/kt-logo.jpeg';
 
-interface HeaderProps {
-  onOpenAddLead: () => void;
-}
-
-export const Header: React.FC<HeaderProps> = ({ onOpenAddLead }) => {
+export const Header: React.FC = () => {
   const { user, logout, role, staffProfile } = useAuth();
 
   return (
@@ -53,27 +49,18 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddLead }) => {
           <span className="hidden sm:inline">Live CRM</span>
         </span>
 
-        {/* Mobile has equivalent actions in BottomNav; keep quick actions on desktop only. */}
-        <div className="hidden items-center gap-2.5 md:flex">
+        {user && (
           <button
-            onClick={onOpenAddLead}
-            className="relative inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-lg shadow-brand-600/30 transition-all duration-200 hover:scale-[1.03] hover:from-brand-500 hover:to-indigo-500 active:scale-[0.97]"
+            onClick={logout}
+            className="rounded-xl p-2 text-slate-400 transition-all hover:bg-rose-500/10 hover:text-rose-400 md:hidden"
+            title="Logout"
+            aria-label="Logout"
           >
-            <Plus className="h-4 w-4 text-indigo-200" />
-            <span>Add Lead</span>
-            <Sparkles className="h-3.5 w-3.5 text-indigo-200 opacity-70" />
+            <LogOut className="h-5 w-5" />
           </button>
+        )}
 
-          <Link
-            to="/settings"
-            className="rounded-xl border border-slate-700/60 bg-slate-800/80 p-2 text-slate-400 shadow-sm transition-all hover:bg-slate-700 hover:text-white"
-            title="Settings & Administration"
-          >
-            <Settings className="h-4 w-4" />
-          </Link>
-        </div>
-
-        {/* User account controls remain available on desktop without crowding mobile. */}
+        {/* Account details stay on desktop; mobile uses the compact logout icon. */}
         {user && (
           <div className="hidden items-center gap-3 border-l border-slate-800 pl-3 md:flex">
             <div className="text-right text-xs">

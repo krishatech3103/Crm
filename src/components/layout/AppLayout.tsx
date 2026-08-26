@@ -1,16 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
-import { AddLeadModal } from '../leads/AddLeadModal';
 
 export const AppLayout: React.FC = () => {
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col">
-      <Header onOpenAddLead={() => setIsAddModalOpen(true)} />
+      <Header />
 
       <div className="flex-1 flex w-full max-w-7xl mx-auto">
         <Sidebar />
@@ -19,12 +16,7 @@ export const AppLayout: React.FC = () => {
         </main>
       </div>
 
-      <BottomNav onOpenAddLead={() => setIsAddModalOpen(true)} />
-
-      <AddLeadModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-      />
+      <BottomNav />
     </div>
   );
 };

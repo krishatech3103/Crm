@@ -9,6 +9,7 @@ interface ModalProps {
   children: React.ReactNode;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl';
   showCloseButton?: boolean;
+  mobilePosition?: 'bottom' | 'center';
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -19,6 +20,7 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   maxWidth = 'md',
   showCloseButton = true,
+  mobilePosition = 'bottom',
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -53,10 +55,9 @@ export const Modal: React.FC<ModalProps> = ({
         onClick={onClose}
       />
 
-      {/* Modal Dialog container - bottom sheet on mobile, centered modal on desktop */}
-      <div className="min-h-full flex items-end sm:items-center justify-center p-0 sm:p-4 text-center">
+      <div className={`min-h-full flex ${mobilePosition === 'center' ? 'items-center p-4' : 'items-end p-0 sm:items-center sm:p-4'} justify-center text-center`}>
         <div
-          className={`w-full ${maxWidthClasses} bg-slate-900 border border-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl text-left overflow-hidden transform transition-all relative z-10 max-h-[90vh] flex flex-col`}
+          className={`w-full ${maxWidthClasses} ${mobilePosition === 'center' ? 'rounded-2xl' : 'rounded-t-2xl sm:rounded-2xl'} bg-slate-900 border border-slate-800 shadow-2xl text-left overflow-hidden transform transition-all relative z-10 max-h-[90vh] flex flex-col`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
