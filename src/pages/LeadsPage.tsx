@@ -59,7 +59,8 @@ export const LeadsPage: React.FC = () => {
   const [selectedLeadForReschedule, setSelectedLeadForReschedule] = useState<Lead | null>(null);
   const [isAddLeadModalOpen, setIsAddLeadModalOpen] = useState(false);
 
-  const filteredLeads = filterLeads(filterState);
+  const activeLeads = leads.filter((lead) => lead.status !== 'Won');
+  const filteredLeads = filterLeads(filterState, activeLeads);
 
   return (
     <div className="space-y-6 text-left animate-fade-in">
@@ -91,7 +92,7 @@ export const LeadsPage: React.FC = () => {
             <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
             <input
               type="text"
-              placeholder="Search name, business, or phone..."
+              placeholder="Search business or phone..."
               value={filterState.search}
               onChange={(e) => setFilterState((prev) => ({ ...prev, search: e.target.value }))}
               className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500 placeholder:text-slate-600 shadow-inner"
@@ -146,7 +147,7 @@ export const LeadsPage: React.FC = () => {
               <option value="created_at_desc">Newest Added</option>
               <option value="follow_up_at_asc">Follow-up Date (Earliest)</option>
               <option value="last_contacted_at_desc">Recently Contacted</option>
-              <option value="name_asc">Name (A-Z)</option>
+              <option value="name_asc">Business Name (A-Z)</option>
             </select>
           </div>
         </div>
@@ -155,7 +156,7 @@ export const LeadsPage: React.FC = () => {
         <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
           <span className="font-medium">
             Showing <strong className="text-white font-bold">{filteredLeads.length}</strong> of{' '}
-            <strong className="text-white font-bold">{leads.length}</strong> total leads
+            <strong className="text-white font-bold">{activeLeads.length}</strong> total leads
           </span>
           {(filterState.search || filterState.status !== 'all' || filterState.followUpFilter !== 'all') && (
             <button
@@ -195,7 +196,7 @@ export const LeadsPage: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-950/90 border-b border-slate-800 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">
-                  <th className="px-4 py-3.5">Lead & Business</th>
+                  <th className="px-4 py-3.5">Business Name</th>
                   <th className="px-4 py-3.5">Phone</th>
                   <th className="px-4 py-3.5">Status</th>
                   <th className="px-4 py-3.5">Follow-up</th>

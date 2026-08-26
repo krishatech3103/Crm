@@ -4,7 +4,9 @@ import type { Lead, LeadStatus } from '../../types/lead';
 import { useLeads } from '../../hooks/useLeads';
 import { useToast } from '../../context/ToastContext';
 import { APP_CONFIG } from '../../config/app.config';
-import { Save, User, Phone, Building2, MapPin, Globe, Calendar, Camera } from 'lucide-react';
+import { ConfirmDialog } from '../common/ConfirmDialog';
+import { useBusinessCategories } from '../../hooks/useBusinessCategories';
+import { Save, Phone, Building2, MapPin, Globe, Calendar, Camera, Tags } from 'lucide-react';
 import { toInputDateTimeLocal } from '../../utils/date';
 
 interface EditLeadModalProps {
@@ -21,35 +23,37 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
   onSuccess,
 }) => {
   const { updateLead } = useLeads();
+  const { categories } = useBusinessCategories();
   const { showToast } = useToast();
 
   const [formData, setFormData] = useState({
-    name: lead.name,
+    name: lead.business_name || lead.name,
     phone: lead.phone,
-    business_name: lead.business_name || '',
+    business_name: lead.business_name || lead.name,
+    business_category: lead.business_category || '',
     status: lead.status,
     follow_up_at: toInputDateTimeLocal(lead.follow_up_at),
     address: lead.address || '',
     google_business_url: lead.google_business_url || '',
     instagram_url: lead.instagram_url || '',
     website_url: lead.website_url || '',
-    source: lead.source || '',
+    source: APP_CONFIG.leadSources.includes(lead.source || '') ? lead.source as string : 'Local',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name.trim() || !formData.phone.trim()) {
-      showToast('Name and phone are required', 'error');
-      return;
-    }
+  const handleBusinessNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const businessName = e.target.value;
+    setFormData((prev) => ({ ...prev, business_name: businessName, name: businessName }));
+  };
 
+  const saveChanges = async () => {
     setIsSubmitting(true);
     let isoFollowUp: string | null = null;
     if (formData.follow_up_at) {
@@ -57,9 +61,10 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
     }
 
     const { error } = await updateLead(lead.id, {
-      name: formData.name.trim(),
+      name: formData.business_name.trim(),
       phone: formData.phone.trim(),
-      business_name: formData.business_name.trim() || null,
+      business_name: formData.business_name.trim(),
+      business_category: formData.business_category.trim() || null,
       status: formData.status as LeadStatus,
       follow_up_at: isoFollowUp,
       address: formData.address.trim() || null,
@@ -80,24 +85,68 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.business_name.trim() || !formData.phone.trim()) {
+      showToast('Business name and phone are required', 'error');
+      return;
+    }
+
+    const onlyFollowUpDateChanged =
+      formData.business_name.trim() === (lead.business_name || lead.name) &&
+      formData.phone.trim() === lead.phone &&
+      formData.business_category.trim() === (lead.business_category || '') &&
+      formData.status === lead.status &&
+      formData.address.trim() === (lead.address || '') &&
+      formData.google_business_url.trim() === (lead.google_business_url || '') &&
+      formData.instagram_url.trim() === (lead.instagram_url || '') &&
+      formData.website_url.trim() === (lead.website_url || '') &&
+      formData.source.trim() === (lead.source || 'Google');
+
+    if (onlyFollowUpDateChanged) {
+      void saveChanges();
+    } else {
+      setIsConfirmOpen(true);
+    }
+  };
+
   return (
+    <>
     <Modal isOpen={isOpen} onClose={onClose} title="Edit Lead Information" maxWidth="lg">
       <form onSubmit={handleSubmit} className="space-y-4 text-left">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-              Lead Name *
+              Business Name *
             </label>
             <div className="relative">
-              <User className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+              <Building2 className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
               <input
                 type="text"
-                name="name"
+                name="business_name"
                 required
-                value={formData.name}
-                onChange={handleChange}
+                value={formData.business_name}
+                onChange={handleBusinessNameChange}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
               />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+              Business Category
+            </label>
+            <div className="relative">
+              <Tags className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+              <select
+                name="business_category"
+                value={formData.business_category}
+                onChange={handleChange}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
+              >
+                <option value="">Select category</option>
+                {categories.map((category) => <option key={category.id} value={category.name}>{category.name}</option>)}
+              </select>
             </div>
           </div>
 
@@ -119,36 +168,20 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Business Name</label>
-            <div className="relative">
-              <Building2 className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-              <input
-                type="text"
-                name="business_name"
-                value={formData.business_name}
-                onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Lead Status</label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
-            >
-              {APP_CONFIG.statuses.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <label className="block text-xs font-medium text-slate-400 mb-1">Lead Status</label>
+          <select
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
+          >
+            {APP_CONFIG.statuses.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -168,14 +201,14 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
 
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1">Lead Source</label>
-            <input
-              type="text"
+            <select
               name="source"
               value={formData.source}
               onChange={handleChange}
-              placeholder="e.g. Google Search, Cold Call"
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
-            />
+            >
+              {APP_CONFIG.leadSources.map((source) => <option key={source} value={source}>{source}</option>)}
+            </select>
           </div>
         </div>
 
@@ -256,5 +289,14 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
         </div>
       </form>
     </Modal>
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={() => void saveChanges()}
+        title="Save lead changes?"
+        message="Confirm the changes to this lead. Follow-up date-only changes are saved without this confirmation."
+        confirmText="Save changes"
+      />
+    </>
   );
 };

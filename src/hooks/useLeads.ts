@@ -1,13 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Lead, LeadFormData, LeadFilterState, LeadStatus } from '../types/lead';
-import { supabase, isDemoMode } from '../lib/supabase';
-import { initialMockLeads } from '../lib/mockData';
+import { isSupabaseConfigured, supabase, SUPABASE_CONFIGURATION_ERROR } from '../lib/supabase';
 import { normalizePhoneNumber } from '../utils/phone';
 import { getFollowUpCategory } from '../utils/date';
-
-const LOCAL_LEADS_KEY = 'leadflow_leads_data';
+import { useAuth } from '../context/AuthContext';
 
 export function useLeads() {
+  const { role } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,25 +16,13 @@ export function useLeads() {
     setLoading(true);
     setError(null);
 
-    if (isDemoMode) {
-      // LocalStorage Fallback Mode
-      try {
-        const stored = localStorage.getItem(LOCAL_LEADS_KEY);
-        if (!stored) {
-          localStorage.setItem(LOCAL_LEADS_KEY, JSON.stringify(initialMockLeads));
-          setLeads(initialMockLeads);
-        } else {
-          setLeads(JSON.parse(stored));
-        }
-      } catch (err: any) {
-        setError(err.message || 'Failed to load local leads');
-      } finally {
-        setLoading(false);
-      }
+    if (!isSupabaseConfigured) {
+      setLeads([]);
+      setError(SUPABASE_CONFIGURATION_ERROR);
+      setLoading(false);
       return;
     }
 
-    // Production Supabase Mode
     try {
       const { data, error: fetchErr } = await supabase
         .from('leads')
@@ -70,39 +57,27 @@ export function useLeads() {
   const addLead = async (
     formData: LeadFormData
   ): Promise<{ lead: Lead | null; error: string | null }> => {
+    const businessName = formData.business_name?.trim() || formData.name.trim();
     const newLeadData = {
-      name: formData.name.trim(),
+      // `name` remains required by the current database schema. The business
+      // name is the CRM's primary lead identifier, so keep both columns aligned.
+      name: businessName,
       phone: formData.phone.trim(),
-      business_name: formData.business_name?.trim() || null,
+      business_name: businessName || null,
+      business_category: formData.business_category?.trim() || null,
       status: formData.status || 'New',
       follow_up_at: formData.follow_up_at ? new Date(formData.follow_up_at).toISOString() : null,
       address: formData.address?.trim() || null,
       google_business_url: formData.google_business_url?.trim() || null,
       instagram_url: formData.instagram_url?.trim() || null,
       website_url: formData.website_url?.trim() || null,
-      source: formData.source?.trim() || 'Manual Entry',
+      source: formData.source?.trim() || 'Google',
     };
 
-    if (isDemoMode) {
-      try {
-        const current = JSON.parse(localStorage.getItem(LOCAL_LEADS_KEY) || '[]');
-        const created: Lead = {
-          ...newLeadData,
-          id: `lead-${Date.now()}`,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          last_contacted_at: null,
-        };
-        const updatedList = [created, ...current];
-        localStorage.setItem(LOCAL_LEADS_KEY, JSON.stringify(updatedList));
-        setLeads(updatedList);
-        return { lead: created, error: null };
-      } catch (err: any) {
-        return { lead: null, error: err.message };
-      }
+    if (!isSupabaseConfigured) {
+      return { lead: null, error: SUPABASE_CONFIGURATION_ERROR };
     }
 
-    // Production Supabase Mode
     try {
       const { data, error: insertErr } = await supabase
         .from('leads')
@@ -129,22 +104,10 @@ export function useLeads() {
       updated_at: new Date().toISOString(),
     };
 
-    if (isDemoMode) {
-      try {
-        const current: Lead[] = JSON.parse(localStorage.getItem(LOCAL_LEADS_KEY) || '[]');
-        const index = current.findIndex((l) => l.id === id);
-        if (index === -1) return { error: 'Lead not found' };
-
-        current[index] = { ...current[index], ...updatedFields };
-        localStorage.setItem(LOCAL_LEADS_KEY, JSON.stringify(current));
-        setLeads([...current]);
-        return { error: null };
-      } catch (err: any) {
-        return { error: err.message };
-      }
+    if (!isSupabaseConfigured) {
+      return { error: SUPABASE_CONFIGURATION_ERROR };
     }
 
-    // Supabase
     try {
       const { error: updateErr } = await supabase
         .from('leads')
@@ -174,16 +137,12 @@ export function useLeads() {
 
   // Delete lead
   const deleteLead = async (id: string): Promise<{ error: string | null }> => {
-    if (isDemoMode) {
-      try {
-        const current: Lead[] = JSON.parse(localStorage.getItem(LOCAL_LEADS_KEY) || '[]');
-        const filtered = current.filter((l) => l.id !== id);
-        localStorage.setItem(LOCAL_LEADS_KEY, JSON.stringify(filtered));
-        setLeads(filtered);
-        return { error: null };
-      } catch (err: any) {
-        return { error: err.message };
-      }
+    if (role !== 'admin') {
+      return { error: 'Only administrators can delete leads.' };
+    }
+
+    if (!isSupabaseConfigured) {
+      return { error: SUPABASE_CONFIGURATION_ERROR };
     }
 
     try {
@@ -197,16 +156,15 @@ export function useLeads() {
   };
 
   // Filtering & Sorting Helper
-  const filterLeads = (filters: LeadFilterState): Lead[] => {
-    return leads
+  const filterLeads = (filters: LeadFilterState, collection: Lead[] = leads): Lead[] => {
+    return collection
       .filter((lead) => {
-        // Search term check (Name, Business Name, Phone)
+        // Search term check (Business Name, Phone)
         if (filters.search) {
           const q = filters.search.toLowerCase();
-          const matchName = lead.name.toLowerCase().includes(q);
-          const matchBiz = (lead.business_name || '').toLowerCase().includes(q);
+          const matchBusiness = (lead.business_name || lead.name).toLowerCase().includes(q);
           const matchPhone = lead.phone.includes(q);
-          if (!matchName && !matchBiz && !matchPhone) return false;
+          if (!matchBusiness && !matchPhone) return false;
         }
 
         // Status check
@@ -229,7 +187,7 @@ export function useLeads() {
       .sort((a, b) => {
         let comparison = 0;
         if (filters.sortBy === 'name') {
-          comparison = a.name.localeCompare(b.name);
+          comparison = (a.business_name || a.name).localeCompare(b.business_name || b.name);
         } else if (filters.sortBy === 'follow_up_at') {
           const timeA = a.follow_up_at ? new Date(a.follow_up_at).getTime() : 0;
           const timeB = b.follow_up_at ? new Date(b.follow_up_at).getTime() : 0;

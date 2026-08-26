@@ -12,13 +12,13 @@ export const APP_CONFIG = {
   statuses: [
     { label: 'New', value: 'New', color: 'indigo', bg: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30 shadow-indigo-500/10 shadow-sm' },
     { label: 'Contacted', value: 'Contacted', color: 'sky', bg: 'bg-sky-500/15 text-sky-300 border-sky-500/30 shadow-sky-500/10 shadow-sm' },
+    { label: 'Demo Sent', value: 'Demo Sent', color: 'violet', bg: 'bg-violet-500/15 text-violet-300 border-violet-500/30 shadow-violet-500/10 shadow-sm' },
     { label: 'Follow-up', value: 'Follow-up', color: 'amber', bg: 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-amber-500/10 shadow-sm animate-pulse-subtle' },
-    { label: 'Interested', value: 'Interested', color: 'cyan', bg: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30 shadow-cyan-500/10 shadow-sm' },
-    { label: 'Proposal Sent', value: 'Proposal Sent', color: 'violet', bg: 'bg-violet-500/15 text-violet-300 border-violet-500/30 shadow-violet-500/10 shadow-sm' },
     { label: 'Won', value: 'Won', color: 'emerald', bg: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 shadow-emerald-500/10 shadow-sm font-semibold' },
-    { label: 'Lost', value: 'Lost', color: 'slate', bg: 'bg-slate-800 text-slate-400 border-slate-700/60' },
     { label: 'Not Interested', value: 'Not Interested', color: 'rose', bg: 'bg-rose-500/15 text-rose-300 border-rose-500/30 shadow-rose-500/10 shadow-sm' },
   ],
+
+  leadSources: ['Google', 'Instagram', 'Local'],
 
   // Note Types
   noteTypes: [

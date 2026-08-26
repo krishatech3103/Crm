@@ -10,9 +10,11 @@ export const isSupabaseConfigured = Boolean(
   !supabaseUrl.includes('placeholder')
 );
 
-export const isDemoMode = !isSupabaseConfigured;
+export const SUPABASE_CONFIGURATION_ERROR =
+  'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.';
 
-// Create standard Supabase client (only initialized with valid URL or dummy placeholder)
+// Keep a client available for module imports. Application actions check configuration
+// before making requests, so no local fallback is ever used.
 export const supabase = createClient(
   isSupabaseConfigured ? supabaseUrl : 'https://placeholder.supabase.co',
   isSupabaseConfigured ? supabaseAnonKey : 'placeholder-key'

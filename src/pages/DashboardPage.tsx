@@ -18,13 +18,14 @@ export const DashboardPage: React.FC = () => {
   const [selectedLeadForReschedule, setSelectedLeadForReschedule] = useState<Lead | null>(null);
 
   // Compute Metrics
-  const totalLeads = leads.length;
-  const newLeadsCount = leads.filter(l => l.status === 'New').length;
-  const interestedCount = leads.filter(l => l.status === 'Interested').length;
-  const wonCount = leads.filter(l => l.status === 'Won').length;
+  const activeLeads = leads.filter((lead) => lead.status !== 'Won');
+  const totalLeads = activeLeads.length;
+  const newLeadsCount = activeLeads.filter(l => l.status === 'New').length;
+  const demoSentCount = activeLeads.filter(l => l.status === 'Demo Sent').length;
+  const clientCount = leads.filter(l => l.status === 'Won').length;
 
   // Filter Today's & Overdue follow-up leads
-  const todaysFollowUps = leads.filter(l => {
+  const todaysFollowUps = activeLeads.filter(l => {
     const cat = getFollowUpCategory(l.follow_up_at);
     return cat === 'overdue' || cat === 'today';
   }).sort((a, b) => {
@@ -38,8 +39,6 @@ export const DashboardPage: React.FC = () => {
   });
 
   const dueCount = todaysFollowUps.length;
-  const winRate = totalLeads > 0 ? Math.round((wonCount / totalLeads) * 100) : 0;
-
   return (
     <div className="space-y-6 text-left animate-fade-in">
       {/* Hero Welcome Banner for Krisha Tech */}
@@ -143,45 +142,45 @@ export const DashboardPage: React.FC = () => {
           </div>
         </button>
 
-        {/* Card 4: Interested */}
+        {/* Card 4: Demo Sent */}
         <button
-          onClick={() => navigate('/leads?status=Interested')}
+          onClick={() => navigate('/leads?status=Demo%20Sent')}
           className="glass-card p-4 rounded-2xl border-l-4 border-l-cyan-500 flex flex-col justify-between cursor-pointer text-left group hover:-translate-y-1 hover:border-cyan-500/40 hover:shadow-lg transition-all duration-200"
         >
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[11px] font-bold uppercase tracking-wider group-hover:text-cyan-300 transition-colors">
-              Interested
+              Demo Sent
             </span>
             <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 group-hover:scale-110 transition-transform">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{interestedCount}</p>
+            <p className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{demoSentCount}</p>
             <p className="text-[10px] text-cyan-300/80 mt-0.5 font-medium flex items-center justify-between">
-              <span>High Potential</span>
+              <span>Demo shared</span>
               <span className="text-cyan-400 group-hover:translate-x-0.5 transition-transform">Filter →</span>
             </p>
           </div>
         </button>
 
-        {/* Card 5: Won & Win Rate */}
+        {/* Card 5: Clients */}
         <button
-          onClick={() => navigate('/leads?status=Won')}
+          onClick={() => navigate('/clients')}
           className="glass-card p-4 rounded-2xl border-l-4 border-l-emerald-500 flex flex-col justify-between hover:glow-emerald col-span-2 lg:col-span-1 cursor-pointer text-left group hover:-translate-y-1 transition-all duration-200"
         >
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[11px] font-bold uppercase tracking-wider group-hover:text-emerald-300 transition-colors">
-              Won ({winRate}%)
+              Clients
             </span>
             <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition-transform">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-extrabold text-emerald-400 tracking-tight">{wonCount}</p>
+            <p className="text-2xl sm:text-3xl font-extrabold text-emerald-400 tracking-tight">{clientCount}</p>
             <p className="text-[10px] text-emerald-300/80 mt-0.5 font-medium flex items-center justify-between">
-              <span>Closed Clients</span>
+              <span>Won opportunities</span>
               <span className="text-emerald-400 group-hover:translate-x-0.5 transition-transform">Filter →</span>
             </p>
           </div>

@@ -1,16 +1,17 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, CalendarCheck, Settings, LogOut, ShieldCheck, Zap } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarCheck, Settings, LogOut, ShieldCheck, Zap, BriefcaseBusiness } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { APP_CONFIG } from '../../config/app.config';
 import ktLogo from '../../assets/kt-logo.jpeg';
 
 export const Sidebar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, role, staffProfile } = useAuth();
 
   const navItems = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboard },
     { label: 'Leads Directory', path: '/leads', icon: Users },
+    { label: 'Clients', path: '/clients', icon: BriefcaseBusiness },
     { label: 'Follow-ups Pipeline', path: '/followups', icon: CalendarCheck },
     { label: 'Settings & Admin', path: '/settings', icon: Settings },
   ];
@@ -81,8 +82,8 @@ export const Sidebar: React.FC = () => {
       {user && (
         <div className="pt-4 border-t border-slate-800/80 space-y-3">
           <div className="px-2 text-xs">
-            <p className="text-white font-semibold truncate">{user.email}</p>
-            <p className="text-[10px] text-slate-400 truncate font-mono">ID: {user.id.slice(0, 12)}</p>
+            <p className="text-white font-semibold truncate">{staffProfile?.username || 'Staff member'}</p>
+            <p className="text-[10px] text-slate-400 truncate font-medium capitalize">{role || 'salesperson'}</p>
           </div>
           <button
             onClick={logout}

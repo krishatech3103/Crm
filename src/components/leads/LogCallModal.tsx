@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal } from '../common/Modal';
+import { ConfirmDialog } from '../common/ConfirmDialog';
 import type { Lead, LeadStatus, NoteType } from '../../types/lead';
 import { useLeads } from '../../hooks/useLeads';
 import { useLeadNotes } from '../../hooks/useLeadNotes';
@@ -24,25 +25,21 @@ export const LogCallModal: React.FC<LogCallModalProps> = ({
   const { updateLead } = useLeads();
   const { addNote } = useLeadNotes(lead.id);
   const { showToast } = useToast();
+  const businessName = lead.business_name || lead.name;
 
   const [noteText, setNoteText] = useState('');
   const [noteType, setNoteType] = useState<NoteType>('Call');
   const [status, setStatus] = useState<LeadStatus>(lead.status);
   const [followUpAt, setFollowUpAt] = useState<string>(toInputDateTimeLocal(lead.follow_up_at));
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const handlePresetSelect = (presetKey: 'later_today' | 'tomorrow' | 'in_2_days' | 'next_week') => {
     const iso = getPresetDateISO(presetKey);
     setFollowUpAt(toInputDateTimeLocal(iso));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!noteText.trim()) {
-      showToast('Please enter call notes before saving', 'error');
-      return;
-    }
-
+  const saveActivity = async () => {
     setIsSubmitting(true);
     const now = new Date().toISOString();
     
@@ -78,12 +75,22 @@ export const LogCallModal: React.FC<LogCallModalProps> = ({
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!noteText.trim()) {
+      showToast('Please enter call notes before saving', 'error');
+      return;
+    }
+    setIsConfirmOpen(true);
+  };
+
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Log Activity for ${lead.name}`}
-      subtitle={lead.business_name || lead.phone}
+      title={`Log Activity for ${businessName}`}
+      subtitle={lead.phone}
       maxWidth="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4 text-left">
@@ -216,5 +223,14 @@ export const LogCallModal: React.FC<LogCallModalProps> = ({
         </div>
       </form>
     </Modal>
+    <ConfirmDialog
+      isOpen={isConfirmOpen}
+      onClose={() => setIsConfirmOpen(false)}
+      onConfirm={() => void saveActivity()}
+      title="Save activity and update lead?"
+      message="This will save the activity note and update the lead status or contact details."
+      confirmText="Save activity"
+    />
+    </>
   );
 };

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '../../config/app.config';
 import { useAuth } from '../../context/AuthContext';
-import { Plus, LogOut, Sparkles, Settings, ShieldCheck } from 'lucide-react';
+import { LogOut, Plus, Settings, ShieldCheck, Sparkles } from 'lucide-react';
 import ktLogo from '../../assets/kt-logo.jpeg';
 
 interface HeaderProps {
@@ -10,73 +10,84 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onOpenAddLead }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, role, staffProfile } = useAuth();
 
   return (
-    <header className="sticky top-0 z-30 glass-panel border-b border-indigo-500/15 px-4 sm:px-6 py-3 flex items-center justify-between gap-4 shadow-xl shadow-indigo-950/20">
-      {/* Brand & Krisha Tech Logo */}
-      <div className="flex items-center gap-3">
-        <Link to="/" className="relative group">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-500 to-krisha-purple rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300 animate-pulse-subtle" />
+    <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-indigo-500/15 px-4 py-2.5 shadow-xl shadow-indigo-950/20 glass-panel sm:px-6">
+      <Link
+        to="/"
+        className="group flex min-w-0 items-center gap-2.5"
+        aria-label="Krisha Tech CRM dashboard"
+      >
+        <div className="relative shrink-0">
+          <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-brand-500 to-krisha-purple opacity-60 blur transition duration-300 group-hover:opacity-100" />
           <img
             src={ktLogo}
             alt="Krisha Tech Logo"
-            className="relative w-10 h-10 rounded-xl object-cover border border-white/20 shadow-md"
+            className="relative h-10 w-10 rounded-xl border border-white/20 bg-slate-950/90 p-0.5 object-contain shadow-md"
           />
-        </Link>
+        </div>
 
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="font-extrabold text-base sm:text-lg tracking-tight leading-none gradient-text">
-              {APP_CONFIG.name}
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <h1 className="whitespace-nowrap text-base font-extrabold leading-none tracking-tight text-white sm:text-lg">
+              {APP_CONFIG.company}
             </h1>
-            <span className="text-[10px] font-extrabold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-              Live CRM
+            <span className="rounded-md border border-indigo-400/35 bg-indigo-500/15 px-1.5 py-0.5 text-[9px] font-extrabold tracking-wide text-indigo-200">
+              CRM
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 hidden sm:block mt-0.5 font-medium">
+          <p className="mt-1 hidden text-[11px] font-medium text-slate-400 sm:block">
             {APP_CONFIG.tagline}
           </p>
         </div>
-      </div>
+      </Link>
 
-      {/* Header Actions */}
-      <div className="flex items-center gap-2.5">
-        {/* Prominent Quick + Add Lead button with glowing effect */}
-        <button
-          onClick={onOpenAddLead}
-          className="relative group inline-flex items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 rounded-xl shadow-lg shadow-brand-600/30 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]"
+      <div className="flex shrink-0 items-center gap-3">
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-extrabold text-emerald-300 shadow-sm"
+          title="CRM is live"
         >
-          <Plus className="w-4 h-4 text-indigo-200 group-hover:rotate-90 transition-transform duration-300" />
-          <span>Add Lead</span>
-          <Sparkles className="w-3.5 h-3.5 text-indigo-200 opacity-70 group-hover:opacity-100" />
-        </button>
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+          <span className="sm:hidden">Live</span>
+          <span className="hidden sm:inline">Live CRM</span>
+        </span>
 
-        {/* Quick Settings Gear Link */}
-        <Link
-          to="/settings"
-          className="p-2 text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded-xl border border-slate-700/60 transition-all shadow-sm"
-          title="Settings & Administration"
-        >
-          <Settings className="w-4 h-4" />
-        </Link>
+        {/* Mobile has equivalent actions in BottomNav; keep quick actions on desktop only. */}
+        <div className="hidden items-center gap-2.5 md:flex">
+          <button
+            onClick={onOpenAddLead}
+            className="relative inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-lg shadow-brand-600/30 transition-all duration-200 hover:scale-[1.03] hover:from-brand-500 hover:to-indigo-500 active:scale-[0.97]"
+          >
+            <Plus className="h-4 w-4 text-indigo-200" />
+            <span>Add Lead</span>
+            <Sparkles className="h-3.5 w-3.5 text-indigo-200 opacity-70" />
+          </button>
 
-        {/* User email & logout trigger for desktop */}
+          <Link
+            to="/settings"
+            className="rounded-xl border border-slate-700/60 bg-slate-800/80 p-2 text-slate-400 shadow-sm transition-all hover:bg-slate-700 hover:text-white"
+            title="Settings & Administration"
+          >
+            <Settings className="h-4 w-4" />
+          </Link>
+        </div>
+
+        {/* User account controls remain available on desktop without crowding mobile. */}
         {user && (
-          <div className="hidden md:flex items-center gap-3 pl-3 border-l border-slate-800">
+          <div className="hidden items-center gap-3 border-l border-slate-800 pl-3 md:flex">
             <div className="text-right text-xs">
-              <p className="text-slate-200 font-semibold">{user.email}</p>
-              <p className="text-[10px] text-brand-400 font-medium flex items-center gap-1 justify-end">
-                <ShieldCheck className="w-3 h-3" /> Staff Account
+              <p className="font-semibold text-slate-200">{staffProfile?.username || 'Staff member'}</p>
+              <p className="flex items-center justify-end gap-1 text-[10px] font-medium text-brand-400">
+                <ShieldCheck className="h-3 w-3" /> {role === 'admin' ? 'Admin' : 'Salesperson'}
               </p>
             </div>
             <button
               onClick={logout}
-              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all"
+              className="rounded-xl p-2 text-slate-400 transition-all hover:bg-rose-500/10 hover:text-rose-400"
               title="Logout"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="h-4 w-4" />
             </button>
           </div>
         )}

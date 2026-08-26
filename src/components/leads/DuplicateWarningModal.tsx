@@ -21,7 +21,7 @@ export const DuplicateWarningModal: React.FC<DuplicateWarningModalProps> = ({
 
   const handleViewExisting = () => {
     onClose();
-    navigate(`/leads/${existingLead.id}`);
+    navigate(existingLead.status === 'Won' ? `/clients/${existingLead.id}` : `/leads/${existingLead.id}`);
   };
 
   return (
@@ -36,11 +36,8 @@ export const DuplicateWarningModal: React.FC<DuplicateWarningModalProps> = ({
         </div>
 
         <div className="glass-panel p-3.5 rounded-xl text-left space-y-1 text-xs">
-          <p className="text-slate-400">Existing Lead Details:</p>
-          <p className="font-semibold text-sm text-white">{existingLead.name}</p>
-          {existingLead.business_name && (
-            <p className="text-slate-300">{existingLead.business_name}</p>
-          )}
+          <p className="text-slate-400">Existing Business Details:</p>
+          <p className="font-semibold text-sm text-white">{existingLead.business_name || existingLead.name}</p>
           <p className="text-slate-400">Status: <span className="text-brand-400 font-medium">{existingLead.status}</span></p>
         </div>
 

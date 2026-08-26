@@ -7,16 +7,21 @@ import { AppLayout } from './components/layout/AppLayout';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LeadsPage } from './pages/LeadsPage';
+import { ClientsPage } from './pages/ClientsPage';
 import { LeadDetailPage } from './pages/LeadDetailPage';
 import { FollowUpsPage } from './pages/FollowUpsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { PWAInstallPrompt } from './components/pwa/PWAInstallPrompt';
+import { ForcePasswordChangeModal } from './components/auth/ForcePasswordChangeModal';
 
 export const App: React.FC = () => {
   return (
     <HashRouter>
       <AuthProvider>
         <ToastProvider>
+          <PWAInstallPrompt />
+          <ForcePasswordChangeModal />
           <Routes>
             {/* Public Login Route */}
             <Route path="/login" element={<LoginPage />} />
@@ -27,6 +32,8 @@ export const App: React.FC = () => {
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/leads" element={<LeadsPage />} />
                 <Route path="/leads/:id" element={<LeadDetailPage />} />
+                <Route path="/clients" element={<ClientsPage />} />
+                <Route path="/clients/:id" element={<LeadDetailPage />} />
                 <Route path="/followups" element={<FollowUpsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>

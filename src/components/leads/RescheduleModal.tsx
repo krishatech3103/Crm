@@ -21,6 +21,7 @@ export const RescheduleModal: React.FC<RescheduleModalProps> = ({
 }) => {
   const { updateFollowUpDate } = useLeads();
   const { showToast } = useToast();
+  const businessName = lead.business_name || lead.name;
 
   const [followUpAt, setFollowUpAt] = useState<string>(toInputDateTimeLocal(lead.follow_up_at));
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,7 +46,7 @@ export const RescheduleModal: React.FC<RescheduleModalProps> = ({
     if (error) {
       showToast(`Error rescheduling: ${error}`, 'error');
     } else {
-      showToast(`Follow-up rescheduled for ${lead.name}`, 'success');
+      showToast(`Follow-up rescheduled for ${businessName}`, 'success');
       onClose();
       if (onSuccess) onSuccess();
     }
@@ -70,7 +71,7 @@ export const RescheduleModal: React.FC<RescheduleModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Reschedule Follow-up"
-      subtitle={`Lead: ${lead.name}`}
+      subtitle={`Business: ${businessName}`}
       maxWidth="sm"
     >
       <form onSubmit={handleSave} className="space-y-4 text-left">

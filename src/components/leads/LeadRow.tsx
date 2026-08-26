@@ -3,9 +3,8 @@ import type { Lead } from '../../types/lead';
 import { Badge } from '../common/Badge';
 import { getWhatsAppUrl, getTelUrl } from '../../utils/phone';
 import { formatDate, formatDateTime, getFollowUpCategory } from '../../utils/date';
-import { Phone, MessageSquare, Calendar, Copy, ChevronRight, PhoneCall } from 'lucide-react';
+import { Phone, MessageSquare, Calendar, ChevronRight, PhoneCall } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useToast } from '../../context/ToastContext';
 
 interface LeadRowProps {
   lead: Lead;
@@ -18,44 +17,27 @@ export const LeadRow: React.FC<LeadRowProps> = ({
   onLogCall,
   onReschedule,
 }) => {
-  const { showToast } = useToast();
   const followUpCategory = getFollowUpCategory(lead.follow_up_at);
-
-  const copyPhone = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(lead.phone);
-    showToast(`Copied phone: ${lead.phone}`, 'info');
-  };
+  const businessName = lead.business_name || lead.name;
+  const detailsPath = lead.status === 'Won' ? `/clients/${lead.id}` : `/leads/${lead.id}`;
 
   return (
     <tr className="border-b border-slate-800/60 hover:bg-slate-800/50 transition-colors group">
-      {/* Lead Name & Business */}
+      {/* Business Name */}
       <td className="px-4 py-3.5 text-left">
         <Link
-          to={`/leads/${lead.id}`}
+          to={detailsPath}
           className="font-bold text-sm text-white hover:text-brand-300 transition-colors flex items-center gap-1.5"
         >
-          <span>{lead.name}</span>
+          <span>{businessName}</span>
           <ChevronRight className="w-3.5 h-3.5 text-indigo-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
         </Link>
-        {lead.business_name ? (
-          <p className="text-xs text-slate-400 font-medium truncate max-w-[200px]">{lead.business_name}</p>
-        ) : (
-          <span className="text-[11px] text-slate-600">—</span>
-        )}
       </td>
 
       {/* Phone Number */}
       <td className="px-4 py-3.5 text-left">
-        <div className="flex items-center gap-1.5 text-xs text-slate-300 font-mono font-medium">
+        <div className="text-xs text-slate-300 font-mono font-medium">
           <span>{lead.phone}</span>
-          <button
-            onClick={copyPhone}
-            className="text-slate-500 hover:text-brand-300 p-0.5 rounded transition-colors opacity-0 group-hover:opacity-100"
-            title="Copy phone"
-          >
-            <Copy className="w-3 h-3" />
-          </button>
         </div>
       </td>
 
@@ -103,14 +85,14 @@ export const LeadRow: React.FC<LeadRowProps> = ({
             href={getTelUrl(lead.phone)}
             onClick={() => onLogCall(lead)}
             className="p-1.5 text-indigo-300 hover:bg-indigo-500/20 rounded-lg transition-colors border border-indigo-500/30"
-            title="Call Lead"
+            title="Call"
           >
             <Phone className="w-4 h-4" />
           </a>
 
           {/* WhatsApp action */}
           <a
-            href={getWhatsAppUrl(lead.phone, `Hi ${lead.name}, regarding web development from Krisha Tech...`)}
+            href={getWhatsAppUrl(lead.phone, `Hi ${businessName}, regarding web development from Krisha Tech...`)}
             target="_blank"
             rel="noopener noreferrer"
             className="p-1.5 text-emerald-300 hover:bg-emerald-500/20 rounded-lg transition-colors border border-emerald-500/30"

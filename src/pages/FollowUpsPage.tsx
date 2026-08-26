@@ -10,14 +10,15 @@ import { CalendarCheck, AlertCircle, Clock, Calendar } from 'lucide-react';
 
 export const FollowUpsPage: React.FC = () => {
   const { leads, loading, refetch } = useLeads();
+  const activeLeads = leads.filter((lead) => lead.status !== 'Won');
 
   const [selectedLeadForCall, setSelectedLeadForCall] = useState<Lead | null>(null);
   const [selectedLeadForReschedule, setSelectedLeadForReschedule] = useState<Lead | null>(null);
 
   // Separate leads by follow-up category
-  const overdueLeads = leads.filter(l => getFollowUpCategory(l.follow_up_at) === 'overdue');
-  const todayLeads = leads.filter(l => getFollowUpCategory(l.follow_up_at) === 'today');
-  const upcomingLeads = leads.filter(l => getFollowUpCategory(l.follow_up_at) === 'upcoming');
+  const overdueLeads = activeLeads.filter(l => getFollowUpCategory(l.follow_up_at) === 'overdue');
+  const todayLeads = activeLeads.filter(l => getFollowUpCategory(l.follow_up_at) === 'today');
+  const upcomingLeads = activeLeads.filter(l => getFollowUpCategory(l.follow_up_at) === 'upcoming');
 
   return (
     <div className="space-y-8 text-left animate-fade-in">

@@ -1,11 +1,9 @@
 export type LeadStatus =
   | 'New'
   | 'Contacted'
+  | 'Demo Sent'
   | 'Follow-up'
-  | 'Interested'
-  | 'Proposal Sent'
   | 'Won'
-  | 'Lost'
   | 'Not Interested';
 
 export type NoteType = 'Call' | 'WhatsApp' | 'General' | 'Meeting';
@@ -18,6 +16,7 @@ export interface Lead {
   name: string;
   phone: string;
   business_name?: string | null;
+  business_category?: string | null;
   status: LeadStatus;
   follow_up_at?: string | null;
   address?: string | null;
@@ -41,6 +40,7 @@ export interface LeadFormData {
   name: string;
   phone: string;
   business_name?: string;
+  business_category?: string;
   status?: LeadStatus;
   follow_up_at?: string | null;
   address?: string;

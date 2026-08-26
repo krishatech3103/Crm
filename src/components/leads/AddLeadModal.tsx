@@ -5,7 +5,8 @@ import { useLeads } from '../../hooks/useLeads';
 import { useToast } from '../../context/ToastContext';
 import { DuplicateWarningModal } from './DuplicateWarningModal';
 import { APP_CONFIG } from '../../config/app.config';
-import { Plus, User, Phone, Building2, MapPin, Globe, Calendar, Camera } from 'lucide-react';
+import { useBusinessCategories } from '../../hooks/useBusinessCategories';
+import { Plus, Phone, Building2, MapPin, Globe, Calendar, Camera, Tags } from 'lucide-react';
 
 interface AddLeadModalProps {
   isOpen: boolean;
@@ -19,19 +20,21 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
   onLeadAdded,
 }) => {
   const { addLead, checkDuplicatePhone } = useLeads();
+  const { categories } = useBusinessCategories();
   const { showToast } = useToast();
 
   const [formData, setFormData] = useState<LeadFormData>({
     name: '',
     phone: '',
     business_name: '',
+    business_category: '',
     status: 'New',
     follow_up_at: '',
     address: '',
     google_business_url: '',
     instagram_url: '',
     website_url: '',
-    source: 'Manual Entry',
+    source: 'Google',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,13 +47,14 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
       name: '',
       phone: '',
       business_name: '',
+      business_category: '',
       status: 'New',
       follow_up_at: '',
       address: '',
       google_business_url: '',
       instagram_url: '',
       website_url: '',
-      source: 'Manual Entry',
+      source: 'Google',
     });
     setDuplicateLead(null);
     setShowDuplicateModal(false);
@@ -62,11 +66,16 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleBusinessNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const businessName = e.target.value;
+    setFormData((prev) => ({ ...prev, business_name: businessName, name: businessName }));
+  };
+
   const handleFormSubmit = async (e?: React.FormEvent, skipDuplicateCheck = false) => {
     if (e) e.preventDefault();
 
-    if (!formData.name.trim() || !formData.phone.trim()) {
-      showToast('Name and phone number are required', 'error');
+    if (!formData.business_name?.trim() || !formData.phone.trim()) {
+      showToast('Business name and phone number are required', 'error');
       return;
     }
 
@@ -86,7 +95,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
     if (error) {
       showToast(`Error adding lead: ${error}`, 'error');
     } else if (lead) {
-      showToast(`Lead "${lead.name}" added successfully!`, 'success');
+      showToast(`Business "${lead.business_name || lead.name}" added successfully!`, 'success');
       resetForm();
       onClose();
       if (onLeadAdded) onLeadAdded(lead);
@@ -97,23 +106,40 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
     <>
       <Modal isOpen={isOpen} onClose={onClose} title="Quick Add Lead" maxWidth="md">
         <form onSubmit={(e) => handleFormSubmit(e, false)} className="space-y-4 text-left">
-          {/* Required Fields Block */}
+          {/* Lead details in entry order */}
           <div className="space-y-3">
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Lead Name <span className="text-rose-400">*</span>
+                Business Name <span className="text-rose-400">*</span>
               </label>
               <div className="relative">
-                <User className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <Building2 className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                 <input
                   type="text"
-                  name="name"
                   required
-                  placeholder="e.g. Ramesh Patel"
-                  value={formData.name}
-                  onChange={handleChange}
+                  placeholder="e.g. Patel Electronics"
+                  value={formData.business_name || ''}
+                  onChange={handleBusinessNameChange}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-slate-500"
                 />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                Business Category
+              </label>
+              <div className="relative">
+                <Tags className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <select
+                  name="business_category"
+                  value={formData.business_category || ''}
+                  onChange={handleChange}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500"
+                >
+                  <option value="">Select category</option>
+                  {categories.map((category) => <option key={category.id} value={category.name}>{category.name}</option>)}
+                </select>
               </div>
             </div>
 
@@ -136,38 +162,20 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
             </div>
           </div>
 
-          {/* Quick Optional Fields */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Business Name</label>
-              <div className="relative">
-                <Building2 className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-                <input
-                  type="text"
-                  name="business_name"
-                  placeholder="e.g. Patel Electronics"
-                  value={formData.business_name || ''}
-                  onChange={handleChange}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500 transition-all placeholder:text-slate-600"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Status</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500 transition-all"
-              >
-                {APP_CONFIG.statuses.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="pt-1">
+            <label className="block text-xs font-medium text-slate-400 mb-1">Status</label>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500 transition-all"
+            >
+              {APP_CONFIG.statuses.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -184,6 +192,18 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
             </div>
           </div>
 
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Lead Source</label>
+            <select
+              name="source"
+              value={formData.source || ''}
+              onChange={handleChange}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"
+            >
+              {APP_CONFIG.leadSources.map((source) => <option key={source} value={source}>{source}</option>)}
+            </select>
+          </div>
+
           {/* Toggle additional optional details */}
           <div className="pt-1">
             <button
@@ -191,7 +211,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
               onClick={() => setShowMoreFields(!showMoreFields)}
               className="text-xs font-medium text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1"
             >
-              <span>{showMoreFields ? '- Hide Extra Fields' : '+ Add Address, GBP & Social Links'}</span>
+              <span>{showMoreFields ? '- Hide Other Details' : '+ Add other details'}</span>
             </button>
           </div>
 
@@ -244,30 +264,16 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-400 mb-1">Website URL</label>
-                  <input
-                    type="url"
-                    name="website_url"
-                    placeholder="https://example.com"
-                    value={formData.website_url || ''}
-                    onChange={handleChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-400 mb-1">Lead Source</label>
-                  <input
-                    type="text"
-                    name="source"
-                    placeholder="Google, Instagram, Referral..."
-                    value={formData.source || ''}
-                    onChange={handleChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-500"
-                  />
-                </div>
+              <div>
+                <label className="block text-slate-400 mb-1">Website URL</label>
+                <input
+                  type="url"
+                  name="website_url"
+                  placeholder="https://example.com"
+                  value={formData.website_url || ''}
+                  onChange={handleChange}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-500"
+                />
               </div>
             </div>
           )}

@@ -1,9 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { LeadNote, NoteType } from '../types/lead';
-import { supabase, isDemoMode } from '../lib/supabase';
-import { initialMockNotes } from '../lib/mockData';
-
-const LOCAL_NOTES_KEY = 'leadflow_notes_data';
+import { isSupabaseConfigured, supabase, SUPABASE_CONFIGURATION_ERROR } from '../lib/supabase';
 
 export function useLeadNotes(leadId?: string) {
   const [notes, setNotes] = useState<LeadNote[]>([]);
@@ -20,24 +17,13 @@ export function useLeadNotes(leadId?: string) {
     setLoading(true);
     setError(null);
 
-    if (isDemoMode) {
-      // LocalStorage Fallback Mode
-      try {
-        const stored = localStorage.getItem(LOCAL_NOTES_KEY);
-        let allNotes: LeadNote[] = stored ? JSON.parse(stored) : initialMockNotes;
-        const filtered = allNotes.filter((n) => n.lead_id === leadId);
-        // Sort newest first
-        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        setNotes(filtered);
-      } catch (err: any) {
-        setError(err.message || 'Failed to load local notes');
-      } finally {
-        setLoading(false);
-      }
+    if (!isSupabaseConfigured) {
+      setNotes([]);
+      setError(SUPABASE_CONFIGURATION_ERROR);
+      setLoading(false);
       return;
     }
 
-    // Production Supabase Mode
     try {
       const { data, error: fetchErr } = await supabase
         .from('lead_notes')
@@ -70,30 +56,10 @@ export function useLeadNotes(leadId?: string) {
       type,
     };
 
-    if (isDemoMode) {
-      try {
-        const stored = localStorage.getItem(LOCAL_NOTES_KEY);
-        let allNotes: LeadNote[] = stored ? JSON.parse(stored) : initialMockNotes;
-        
-        const createdNote: LeadNote = {
-          ...newNoteObj,
-          id: `note-${Date.now()}`,
-          created_at: new Date().toISOString(),
-        };
-
-        allNotes.unshift(createdNote);
-        localStorage.setItem(LOCAL_NOTES_KEY, JSON.stringify(allNotes));
-        
-        if (targetLeadId === leadId) {
-          setNotes((prev) => [createdNote, ...prev]);
-        }
-        return { note: createdNote, error: null };
-      } catch (err: any) {
-        return { note: null, error: err.message };
-      }
+    if (!isSupabaseConfigured) {
+      return { note: null, error: SUPABASE_CONFIGURATION_ERROR };
     }
 
-    // Production Supabase
     try {
       const { data, error: insertErr } = await supabase
         .from('lead_notes')
