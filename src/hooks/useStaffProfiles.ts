@@ -2,6 +2,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase, SUPABASE_CONFIGURATION_ERROR } from '../lib/supabase';
 import type { StaffProfile, UserRole } from '../types/staff';
 
+export interface CreateStaffMemberInput {
+  username: string;
+  email: string;
+  temporaryPassword: string;
+  role: UserRole;
+}
+
 export function useStaffProfiles() {
   const [staffMembers, setStaffMembers] = useState<StaffProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,5 +64,31 @@ export function useStaffProfiles() {
     return { error: null };
   };
 
-  return { staffMembers, loading, error, refetch, updateStaffMember };
+  const createStaffMember = async (
+    input: CreateStaffMemberInput,
+  ): Promise<{ error: string | null }> => {
+    if (!isSupabaseConfigured) return { error: SUPABASE_CONFIGURATION_ERROR };
+
+    const { data, error: createError } = await supabase.functions.invoke('create-staff-user', {
+      body: input,
+    });
+
+    if (createError) {
+      const response = (createError as { context?: Response }).context;
+      const responseBody = response
+        ? (await response.clone().json().catch(() => null)) as { error?: unknown } | null
+        : null;
+      const message = typeof responseBody?.error === 'string'
+        ? responseBody.error
+        : createError.message || 'Unable to create staff user.';
+      return { error: message };
+    }
+    if (!data?.staffMember) return { error: 'The staff user was not created.' };
+
+    setStaffMembers((current) => [...current, data.staffMember as StaffProfile]
+      .sort((a, b) => a.username.localeCompare(b.username)));
+    return { error: null };
+  };
+
+  return { staffMembers, loading, error, refetch, updateStaffMember, createStaffMember };
 }

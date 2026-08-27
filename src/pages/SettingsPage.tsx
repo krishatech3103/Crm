@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useStaffProfiles } from '../hooks/useStaffProfiles';
 import { useBusinessCategories } from '../hooks/useBusinessCategories';
 import { EditStaffMemberModal } from '../components/settings/EditStaffMemberModal';
+import { CreateStaffMemberModal } from '../components/settings/CreateStaffMemberModal';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import type { StaffProfile } from '../types/staff';
 import type { BusinessCategory } from '../types/businessCategory';
@@ -27,10 +28,11 @@ const EMPTY_AGENCY_SETTINGS: AgencySettings = {
 export const SettingsPage: React.FC = () => {
   const { showToast } = useToast();
   const { role, user, refreshStaffProfile } = useAuth();
-  const { staffMembers, loading: staffLoading, error: staffError, updateStaffMember } = useStaffProfiles();
+  const { staffMembers, loading: staffLoading, error: staffError, updateStaffMember, createStaffMember } = useStaffProfiles();
   const { categories, loading: categoriesLoading, error: categoriesError, addCategory, deleteCategory } = useBusinessCategories();
   const [activeTab, setActiveTab] = useState<'staff' | 'categories' | 'agency'>('staff');
   const [editingStaffMember, setEditingStaffMember] = useState<StaffProfile | null>(null);
+  const [isCreateStaffOpen, setIsCreateStaffOpen] = useState(false);
   const [categoryName, setCategoryName] = useState('');
   const [categoryToDelete, setCategoryToDelete] = useState<BusinessCategory | null>(null);
 
@@ -61,6 +63,13 @@ export const SettingsPage: React.FC = () => {
       if (editingStaffMember.id === user?.id) await refreshStaffProfile();
       showToast('Staff member updated successfully.', 'success');
     }
+    return result;
+  };
+
+  const handleCreateStaffMember = async (input: Parameters<typeof createStaffMember>[0]) => {
+    const result = await createStaffMember(input);
+    if (result.error) showToast(`Unable to create staff user: ${result.error}`, 'error');
+    else showToast('Staff user created. They must change the temporary password at first login.', 'success');
     return result;
   };
 
@@ -156,11 +165,19 @@ export const SettingsPage: React.FC = () => {
       {activeTab === 'staff' && (
         <div className="max-w-3xl animate-slide-up">
           <div className="glass-panel overflow-hidden rounded-3xl border border-indigo-500/20 shadow-xl">
-            <div className="border-b border-slate-800 px-6 py-5">
-              <h3 className="flex items-center gap-2 text-base font-extrabold text-white">
-                <Users className="h-5 w-5 text-violet-300" /> Staff members
-              </h3>
-              <p className="mt-1 text-xs text-slate-400">Use usernames and assign only Admin or Salesperson access.</p>
+            <div className="flex items-center justify-between gap-4 border-b border-slate-800 px-6 py-5">
+              <div>
+                <h3 className="flex items-center gap-2 text-base font-extrabold text-white">
+                  <Users className="h-5 w-5 text-violet-300" /> Staff members
+                </h3>
+                <p className="mt-1 text-xs text-slate-400">Use usernames and assign only Admin or Salesperson access.</p>
+              </div>
+              <button
+                onClick={() => setIsCreateStaffOpen(true)}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-brand-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-brand-500"
+              >
+                <Plus className="h-4 w-4" /> Add staff
+              </button>
             </div>
 
             {staffLoading ? (
@@ -311,6 +328,11 @@ export const SettingsPage: React.FC = () => {
         staffMember={editingStaffMember}
         onClose={() => setEditingStaffMember(null)}
         onSave={handleSaveStaffMember}
+      />
+      <CreateStaffMemberModal
+        isOpen={isCreateStaffOpen}
+        onClose={() => setIsCreateStaffOpen(false)}
+        onCreate={handleCreateStaffMember}
       />
       <ConfirmDialog
         isOpen={Boolean(categoryToDelete)}
