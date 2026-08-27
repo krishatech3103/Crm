@@ -28,7 +28,7 @@ const EMPTY_AGENCY_SETTINGS: AgencySettings = {
 export const SettingsPage: React.FC = () => {
   const { showToast } = useToast();
   const { role, user, refreshStaffProfile } = useAuth();
-  const { staffMembers, loading: staffLoading, error: staffError, updateStaffMember, createStaffMember } = useStaffProfiles();
+  const { staffMembers, loading: staffLoading, error: staffError, updateStaffMember, createStaffMember, resetStaffPassword } = useStaffProfiles();
   const { categories, loading: categoriesLoading, error: categoriesError, addCategory, deleteCategory } = useBusinessCategories();
   const [activeTab, setActiveTab] = useState<'staff' | 'categories' | 'agency'>('staff');
   const [editingStaffMember, setEditingStaffMember] = useState<StaffProfile | null>(null);
@@ -70,6 +70,17 @@ export const SettingsPage: React.FC = () => {
     const result = await createStaffMember(input);
     if (result.error) showToast(`Unable to create staff user: ${result.error}`, 'error');
     else showToast('Staff user created. They must change the temporary password at first login.', 'success');
+    return result;
+  };
+
+  const handleResetStaffPassword = async (temporaryPassword: string) => {
+    if (!editingStaffMember) return { error: 'No staff member selected.' };
+    const result = await resetStaffPassword(editingStaffMember.id, temporaryPassword);
+    if (result.error) showToast(`Unable to reset password: ${result.error}`, 'error');
+    else {
+      if (editingStaffMember.id === user?.id) await refreshStaffProfile();
+      showToast('Temporary password set. The staff member must change it on their next login.', 'success');
+    }
     return result;
   };
 
@@ -328,6 +339,7 @@ export const SettingsPage: React.FC = () => {
         staffMember={editingStaffMember}
         onClose={() => setEditingStaffMember(null)}
         onSave={handleSaveStaffMember}
+        onResetPassword={handleResetStaffPassword}
       />
       <CreateStaffMemberModal
         isOpen={isCreateStaffOpen}

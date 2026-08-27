@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Save, UserRound } from 'lucide-react';
+import { KeyRound, Save, UserRound } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import type { StaffProfile, UserRole } from '../../types/staff';
 
@@ -7,11 +7,13 @@ interface EditStaffMemberModalProps {
   staffMember: StaffProfile | null;
   onClose: () => void;
   onSave: (updates: Pick<StaffProfile, 'username' | 'role'>) => Promise<{ error: string | null }>;
+  onResetPassword: (temporaryPassword: string) => Promise<{ error: string | null }>;
 }
 
-export const EditStaffMemberModal: React.FC<EditStaffMemberModalProps> = ({ staffMember, onClose, onSave }) => {
+export const EditStaffMemberModal: React.FC<EditStaffMemberModalProps> = ({ staffMember, onClose, onSave, onResetPassword }) => {
   const [username, setUsername] = useState('');
   const [role, setRole] = useState<UserRole>('salesperson');
+  const [temporaryPassword, setTemporaryPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -19,6 +21,7 @@ export const EditStaffMemberModal: React.FC<EditStaffMemberModalProps> = ({ staf
     if (!staffMember) return;
     setUsername(staffMember.username);
     setRole(staffMember.role);
+    setTemporaryPassword('');
     setError(null);
   }, [staffMember]);
 
@@ -30,14 +33,29 @@ export const EditStaffMemberModal: React.FC<EditStaffMemberModalProps> = ({ staf
       setError('Username is required.');
       return;
     }
+    if (temporaryPassword && temporaryPassword.length < 8) {
+      setError('Temporary password must be at least 8 characters.');
+      return;
+    }
 
     setIsSaving(true);
     const result = await onSave({ username: trimmedUsername, role });
-    setIsSaving(false);
     if (result.error) {
+      setIsSaving(false);
       setError(result.error);
       return;
     }
+
+    if (temporaryPassword) {
+      const passwordResult = await onResetPassword(temporaryPassword);
+      if (passwordResult.error) {
+        setIsSaving(false);
+        setError(passwordResult.error);
+        return;
+      }
+    }
+
+    setIsSaving(false);
     onClose();
   };
 
@@ -63,6 +81,23 @@ export const EditStaffMemberModal: React.FC<EditStaffMemberModalProps> = ({ staf
               required
             />
           </div>
+        </label>
+
+        <label className="block text-xs font-semibold text-slate-300">
+          New temporary password <span className="font-normal text-slate-500">(optional)</span>
+          <div className="relative mt-1.5">
+            <KeyRound className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+            <input
+              type="password"
+              value={temporaryPassword}
+              onChange={(event) => setTemporaryPassword(event.target.value)}
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 py-2.5 pl-10 pr-3 text-sm text-white outline-none focus:border-brand-500"
+              autoComplete="new-password"
+              placeholder="Leave blank to keep current password"
+              disabled={isSaving}
+            />
+          </div>
+          <span className="mt-1 block font-normal leading-4 text-slate-500">Setting one forces this staff member to choose a new password on their next login.</span>
         </label>
 
         <label className="block text-xs font-semibold text-slate-300">

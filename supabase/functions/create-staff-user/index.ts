@@ -33,7 +33,7 @@ Deno.serve(async (request) => {
     .maybeSingle();
   if (callerProfile?.role !== 'admin') return json({ error: 'Only administrators can create staff users.' }, 403);
 
-  let payload: { username?: unknown; email?: unknown; temporaryPassword?: unknown; role?: unknown };
+  let payload: { username?: unknown; temporaryPassword?: unknown; role?: unknown };
   try {
     payload = await request.json();
   } catch {
@@ -41,22 +41,25 @@ Deno.serve(async (request) => {
   }
 
   const username = typeof payload.username === 'string' ? payload.username.trim() : '';
-  const email = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
   const password = typeof payload.temporaryPassword === 'string' ? payload.temporaryPassword : '';
   const role: UserRole = payload.role === 'admin' ? 'admin' : 'salesperson';
   if (!/^[a-zA-Z0-9._-]{3,50}$/.test(username)) return json({ error: 'Username must be 3–50 characters and may contain letters, numbers, dots, underscores, or hyphens.' }, 400);
-  if (!/^\S+@\S+\.\S+$/.test(email)) return json({ error: 'Enter a valid login email.' }, 400);
   if (password.length < 8) return json({ error: 'Temporary password must be at least 8 characters.' }, 400);
 
   const { data: existingProfile } = await adminClient
     .from('staff_profiles')
     .select('id')
-    .eq('username', username)
+    .ilike('username', username)
     .maybeSingle();
   if (existingProfile) return json({ error: 'That username is already in use.' }, 409);
 
+  // Supabase Auth uses an email/password credential internally. This generated
+  // address is private and is never returned to or displayed in the CRM; staff
+  // sign in with their username through the dedicated login function.
+  const internalEmail = `${username.toLowerCase()}@users.krishatech.invalid`;
+
   const { data: created, error: createError } = await adminClient.auth.admin.createUser({
-    email,
+    email: internalEmail,
     password,
     email_confirm: true,
     user_metadata: { username },

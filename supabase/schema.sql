@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS public.leads (
     created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL DEFAULT auth.uid(),
     name TEXT NOT NULL,
     phone TEXT NOT NULL,
+    phone_normalized TEXT NOT NULL,
     business_name TEXT,
     business_category TEXT,
     status TEXT DEFAULT 'New'::text NOT NULL CHECK (status IN ('New', 'Contacted', 'Demo Sent', 'Follow-up', 'Not Interested', 'Won')),
@@ -33,6 +34,7 @@ CREATE TABLE IF NOT EXISTS public.lead_notes (
 
 -- 3. Create Performance & Duplicate Search Indexes
 CREATE INDEX IF NOT EXISTS idx_leads_phone ON public.leads(phone);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_phone_normalized_unique ON public.leads(phone_normalized);
 CREATE INDEX IF NOT EXISTS idx_leads_status ON public.leads(status);
 CREATE INDEX IF NOT EXISTS idx_leads_follow_up_at ON public.leads(follow_up_at);
 CREATE INDEX IF NOT EXISTS idx_leads_created_at ON public.leads(created_at DESC);
@@ -115,6 +117,16 @@ CREATE TABLE IF NOT EXISTS public.staff_profiles (
 );
 
 CREATE INDEX IF NOT EXISTS idx_staff_profiles_role ON public.staff_profiles(role);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_staff_profiles_username_lower ON public.staff_profiles(lower(username));
+
+-- The internal authentication address is intentionally not exposed through
+-- staff_profiles. Username-based login functions read this server-only table.
+CREATE TABLE IF NOT EXISTS public.staff_login_accounts (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    login_email TEXT NOT NULL UNIQUE
+);
+
+ALTER TABLE public.staff_login_accounts ENABLE ROW LEVEL SECURITY;
 
 CREATE OR REPLACE FUNCTION public.handle_new_staff_profile()
 RETURNS TRIGGER
@@ -130,6 +142,11 @@ BEGIN
     true
   )
   ON CONFLICT (id) DO NOTHING;
+  IF NEW.email IS NOT NULL THEN
+    INSERT INTO public.staff_login_accounts (id, login_email)
+    VALUES (NEW.id, NEW.email)
+    ON CONFLICT (id) DO UPDATE SET login_email = EXCLUDED.login_email;
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -148,6 +165,10 @@ SELECT
   true
 FROM auth.users AS users
 ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.staff_login_accounts (id, login_email)
+SELECT id, email FROM auth.users WHERE email IS NOT NULL
+ON CONFLICT (id) DO UPDATE SET login_email = EXCLUDED.login_email;
 
 DROP TRIGGER IF EXISTS set_staff_profiles_updated_at ON public.staff_profiles;
 CREATE TRIGGER set_staff_profiles_updated_at
@@ -218,6 +239,36 @@ CREATE POLICY "Only admins can delete leads"
     ON public.leads FOR DELETE
     TO authenticated
     USING (public.is_admin());
+
+-- Store and enforce normalized phone numbers to prevent duplicate leads even
+-- when two users submit different formats at the same time.
+CREATE OR REPLACE FUNCTION public.normalize_lead_phone(value TEXT)
+RETURNS TEXT
+IMMUTABLE
+LANGUAGE sql
+AS $$
+  SELECT CASE
+    WHEN length(regexp_replace(COALESCE(value, ''), '\D', '', 'g')) = 12
+      AND left(regexp_replace(COALESCE(value, ''), '\D', '', 'g'), 2) = '91'
+      THEN substring(regexp_replace(COALESCE(value, ''), '\D', '', 'g') FROM 3)
+    ELSE regexp_replace(COALESCE(value, ''), '\D', '', 'g')
+  END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.set_lead_phone_normalized()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.phone_normalized := public.normalize_lead_phone(NEW.phone);
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS set_lead_phone_normalized ON public.leads;
+CREATE TRIGGER set_lead_phone_normalized
+BEFORE INSERT OR UPDATE OF phone ON public.leads
+FOR EACH ROW EXECUTE FUNCTION public.set_lead_phone_normalized();
 
 -- 9. Business category master (admin managed)
 CREATE TABLE IF NOT EXISTS public.business_categories (

@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { APP_CONFIG } from '../config/app.config';
-import { Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Lock, UserRound, ArrowRight, ShieldCheck } from 'lucide-react';
 import ktLogo from '../assets/kt-logo.jpeg';
 
 export const LoginPage: React.FC = () => {
   const { user, login } = useAuth();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -23,12 +23,12 @@ export const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!username.trim()) return;
 
     setIsSubmitting(true);
     setErrorMessage(null);
 
-    const { error } = await login(email, password);
+    const { error } = await login(username, password);
     setIsSubmitting(false);
 
     if (error) {
@@ -72,7 +72,7 @@ export const LoginPage: React.FC = () => {
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-brand-400" />
-              <h2 className="text-sm font-semibold text-white">Staff Authentication Portal</h2>
+              <h2 className="text-sm font-semibold text-white">Authentication Portal</h2>
             </div>
             <span className="text-[10px] uppercase font-extrabold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full">
               Secure
@@ -88,16 +88,17 @@ export const LoginPage: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                Staff Email Address
+                Username
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+                <UserRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
                 <input
-                  type="email"
+                  type="text"
                   required
-                  placeholder="name@krishatech.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="username"
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-3 text-sm text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-slate-600"
                 />
               </div>

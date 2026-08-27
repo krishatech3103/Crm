@@ -14,15 +14,17 @@ import { SettingsPage } from './pages/SettingsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PWAInstallPrompt } from './components/pwa/PWAInstallPrompt';
 import { ForcePasswordChangeModal } from './components/auth/ForcePasswordChangeModal';
+import { LeadsProvider } from './context/LeadsContext';
 
 export const App: React.FC = () => {
   return (
     <HashRouter>
       <AuthProvider>
-        <ToastProvider>
-          <PWAInstallPrompt />
-          <ForcePasswordChangeModal />
-          <Routes>
+        <LeadsProvider>
+          <ToastProvider>
+            <PWAInstallPrompt />
+            <ForcePasswordChangeModal />
+            <Routes>
             {/* Public Login Route */}
             <Route path="/login" element={<LoginPage />} />
 
@@ -42,8 +44,9 @@ export const App: React.FC = () => {
             {/* 404 Route */}
             <Route path="/404" element={<NotFoundPage />} />
             <Route path="*" element={<Navigate to="/404" replace />} />
-          </Routes>
-        </ToastProvider>
+            </Routes>
+          </ToastProvider>
+        </LeadsProvider>
       </AuthProvider>
     </HashRouter>
   );

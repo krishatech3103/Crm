@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
-import { KeyRound, Mail, UserPlus, UserRound } from 'lucide-react';
+import { KeyRound, UserPlus, UserRound } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import type { UserRole } from '../../types/staff';
 
 interface CreateStaffMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (input: { username: string; email: string; temporaryPassword: string; role: UserRole }) => Promise<{ error: string | null }>;
+  onCreate: (input: { username: string; temporaryPassword: string; role: UserRole }) => Promise<{ error: string | null }>;
 }
 
 export const CreateStaffMemberModal: React.FC<CreateStaffMemberModalProps> = ({ isOpen, onClose, onCreate }) => {
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
   const [temporaryPassword, setTemporaryPassword] = useState('');
   const [role, setRole] = useState<UserRole>('salesperson');
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +32,7 @@ export const CreateStaffMemberModal: React.FC<CreateStaffMemberModalProps> = ({ 
     }
 
     setIsCreating(true);
-    const result = await onCreate({ username: username.trim(), email: email.trim(), temporaryPassword, role });
+    const result = await onCreate({ username: username.trim(), temporaryPassword, role });
     setIsCreating(false);
     if (result.error) {
       setError(result.error);
@@ -41,7 +40,6 @@ export const CreateStaffMemberModal: React.FC<CreateStaffMemberModalProps> = ({ 
     }
 
     setUsername('');
-    setEmail('');
     setTemporaryPassword('');
     setRole('salesperson');
     close();
@@ -55,14 +53,6 @@ export const CreateStaffMemberModal: React.FC<CreateStaffMemberModalProps> = ({ 
           <div className="relative mt-1.5">
             <UserRound className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
             <input value={username} onChange={(event) => setUsername(event.target.value)} className="w-full rounded-xl border border-slate-700 bg-slate-950 py-2.5 pl-10 pr-3 text-sm text-white outline-none focus:border-brand-500" autoComplete="username" required disabled={isCreating} />
-          </div>
-        </label>
-
-        <label className="block text-xs font-semibold text-slate-300">
-          Login email
-          <div className="relative mt-1.5">
-            <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
-            <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-xl border border-slate-700 bg-slate-950 py-2.5 pl-10 pr-3 text-sm text-white outline-none focus:border-brand-500" autoComplete="email" required disabled={isCreating} />
           </div>
         </label>
 

@@ -4,7 +4,6 @@ import type { StaffProfile, UserRole } from '../types/staff';
 
 export interface CreateStaffMemberInput {
   username: string;
-  email: string;
   temporaryPassword: string;
   role: UserRole;
 }
@@ -90,5 +89,33 @@ export function useStaffProfiles() {
     return { error: null };
   };
 
-  return { staffMembers, loading, error, refetch, updateStaffMember, createStaffMember };
+  const resetStaffPassword = async (
+    id: string,
+    temporaryPassword: string,
+  ): Promise<{ error: string | null }> => {
+    if (!isSupabaseConfigured) return { error: SUPABASE_CONFIGURATION_ERROR };
+
+    const { error: resetError } = await supabase.functions.invoke('update-staff-password', {
+      body: { userId: id, temporaryPassword },
+    });
+
+    if (!resetError) {
+      setStaffMembers((current) => current.map((member) => member.id === id
+        ? { ...member, must_change_password: true }
+        : member));
+      return { error: null };
+    }
+
+    const response = (resetError as { context?: Response }).context;
+    const responseBody = response
+      ? (await response.clone().json().catch(() => null)) as { error?: unknown } | null
+      : null;
+    return {
+      error: typeof responseBody?.error === 'string'
+        ? responseBody.error
+        : resetError.message || 'Unable to reset the password.',
+    };
+  };
+
+  return { staffMembers, loading, error, refetch, updateStaffMember, createStaffMember, resetStaffPassword };
 }

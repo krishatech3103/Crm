@@ -22,7 +22,7 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
   lead,
   onSuccess,
 }) => {
-  const { updateLead } = useLeads();
+  const { updateLead, checkDuplicatePhone } = useLeads();
   const { categories } = useBusinessCategories();
   const { showToast } = useToast();
 
@@ -89,6 +89,12 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
     e.preventDefault();
     if (!formData.business_name.trim() || !formData.phone.trim()) {
       showToast('Business name and phone are required', 'error');
+      return;
+    }
+
+    const existingLead = checkDuplicatePhone(formData.phone, lead.id);
+    if (existingLead) {
+      showToast(`This mobile number is already used by ${existingLead.business_name || existingLead.name}.`, 'error');
       return;
     }
 

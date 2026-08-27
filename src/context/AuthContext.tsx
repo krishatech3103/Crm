@@ -12,7 +12,7 @@ interface AuthContextType {
   role: UserRole | null;
   staffProfile: StaffProfile | null;
   refreshStaffProfile: () => Promise<void>;
-  login: (email: string, password?: string) => Promise<{ error: any }>;
+  login: (username: string, password?: string) => Promise<{ error: Error | null }>;
   logout: () => Promise<void>;
 }
 
@@ -96,16 +96,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, [loadStaffProfile]);
 
-  const login = async (email: string, password?: string) => {
+  const login = async (username: string, password?: string): Promise<{ error: Error | null }> => {
     if (!isSupabaseConfigured) {
       return { error: new Error(SUPABASE_CONFIGURATION_ERROR) };
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password: password || '',
+    const { data, error: loginError } = await supabase.functions.invoke('login-with-username', {
+      body: { username: username.trim(), password: password || '' },
     });
-    return { error };
+    if (loginError) return { error: new Error('Login failed. Check your username and password.') };
+    if (!data?.session?.access_token || !data.session.refresh_token) {
+      return { error: new Error('Login failed. Check your username and password.') };
+    }
+
+    const { error: sessionError } = await supabase.auth.setSession({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+    });
+    return { error: sessionError };
   };
 
   const logout = async () => {
